@@ -59,6 +59,10 @@ resource "aws_lb_target_group" "bastion-service" {
     port                = "${var.lb_healthcheck_port}"
   }
 
+  lifecycle {
+    ignore_changes = "lambda_multi_value_headers_enabled"
+  }
+
   tags = "${var.tags}"
 }
 
@@ -78,6 +82,10 @@ resource "aws_lb_target_group" "bastion-host" {
     interval            = "${var.lb_interval}"
     protocol            = "TCP"
     port                = "${var.lb_healthcheck_port}"
+  }
+
+  lifecycle {
+    ignore_changes = "lambda_multi_value_headers_enabled"
   }
 
   tags = "${var.tags}"
