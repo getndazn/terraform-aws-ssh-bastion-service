@@ -13,7 +13,7 @@ data "aws_ami" "debian" {
 
   filter {
     name   = "name"
-    values = ["debian-stretch-hvm-x86_6 4-*"]
+    values = ["debian-stretch-hvm-x86_64-*"]
   }
 
   owners = ["379101102735"] # Debian
@@ -27,12 +27,14 @@ resource "aws_launch_template" "bastion-service-host" {
   name_prefix                 = "bastion-service-host"
   image_id                    = "${local.bastion_ami_id}"
   instance_type               = "${var.bastion_instance_type}"
+  # iam_instance_profile        = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
   user_data                   = "${data.template_cloudinit_config.config.rendered}"
   key_name                    = "${var.bastion_service_host_key_name}"
 
   iam_instance_profile {
     name = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
   }
+
   network_interfaces {
     associate_public_ip_address = "${var.public_ip}"
     security_groups             = ["${aws_security_group.bastion_service.id}", "${compact(concat(var.security_groups_additional))}"]
