@@ -50,7 +50,7 @@ resource "aws_launch_template" "bastion-service-host" {
   key_name                    = "${var.bastion_service_host_key_name}"
 
   iam_instance_profile {
-    name = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
+    arn = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
   }
 
   network_interfaces {
