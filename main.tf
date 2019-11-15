@@ -24,22 +24,33 @@ data "aws_ami" "debian" {
 ############################
 
 resource "aws_launch_template" "bastion-service-host" {
-  name_prefix          = "bastion-service-host"
-  image_id             = "${local.bastion_ami_id}"
-  instance_type        = "${var.bastion_instance_type}"
-  iam_instance_profile = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
-  user_data            = "${data.template_cloudinit_config.config.rendered}"
-  key_name             = "${var.bastion_service_host_key_name}"
+  name_prefix                 = "bastion-service-host"
+  image_id                    = "${local.bastion_ami_id}"
+  instance_type               = "${var.bastion_instance_type}"
+  # iam_instance_profile        = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
+  iam_instance_profile        = ["${aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn}", "${aws_iam_instance_profile.bastion_service_profile.*.arn}"]
+  user_data                   = "${data.template_cloudinit_config.config.rendered}"
+  key_name                    = "${var.bastion_service_host_key_name}"
 
   network_interfaces {
     associate_public_ip_address = "${var.public_ip}"
     security_groups             = ["${aws_security_group.bastion_service.id}", "${compact(concat(var.security_groups_additional))}"]
   }
-
   lifecycle {
     create_before_destroy = true
   }
 }
+
+
+
+
+  iam_instance_profile = element(
+    concat(
+      aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn,
+      aws_iam_instance_profile.bastion_service_profile.*.arn,
+    ),
+    0,
+  )
 
 #######################################################
 # ASG section
@@ -56,13 +67,13 @@ data "null_data_source" "asg-tags" {
 }
 
 resource "aws_autoscaling_group" "bastion-service" {
-  availability_zones  = ["${data.aws_availability_zones.available.names}"]
-  name_prefix         = "bastion-service-asg"
-  max_size            = "${var.asg_max}"
-  min_size            = "${var.asg_min}"
-  desired_capacity    = "${var.asg_desired}"
-  vpc_zone_identifier = ["${var.subnets_asg}"]
-  target_group_arns   = ["${aws_lb_target_group.bastion-service.arn}", "${aws_lb_target_group.bastion-host.*.arn}"]
+  availability_zones   = ["${data.aws_availability_zones.available.names}"]
+  name_prefix          = "bastion-service-asg"
+  max_size             = "${var.asg_max}"
+  min_size             = "${var.asg_min}"
+  desired_capacity     = "${var.asg_desired}"
+  vpc_zone_identifier  = ["${var.subnets_asg}"]
+  target_group_arns    = ["${aws_lb_target_group.bastion-service.arn}", "${aws_lb_target_group.bastion-host.*.arn}"]
 
   mixed_instances_policy {
     instances_distribution {
