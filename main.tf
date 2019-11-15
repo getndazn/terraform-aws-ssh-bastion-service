@@ -41,17 +41,6 @@ resource "aws_launch_template" "bastion-service-host" {
   }
 }
 
-
-
-
-  iam_instance_profile = element(
-    concat(
-      aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn,
-      aws_iam_instance_profile.bastion_service_profile.*.arn,
-    ),
-    0,
-  )
-
 #######################################################
 # ASG section
 #######################################################
