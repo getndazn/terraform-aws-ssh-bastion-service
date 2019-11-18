@@ -189,3 +189,8 @@ variable "security_groups_additional" {
   type        = "list"
   default     = []
 }
+
+variable "on_demand_base_capacity" {
+  default     = 0
+  description = "allows a base level of on demand when using spot"
+}

@@ -38,6 +38,30 @@ resource "aws_launch_configuration" "bastion-service-host" {
   }
 }
 
+############################
+#Launch template for service host
+############################
+
+resource "aws_launch_template" "bastion-service-host" {
+  name_prefix                 = "bastion-service-host"
+  image_id                    = "${local.bastion_ami_id}"
+  instance_type               = "${var.bastion_instance_type}"
+  user_data                   = "${base64encode(data.template_cloudinit_config.config.rendered)}"
+  key_name                    = "${var.bastion_service_host_key_name}"
+
+  iam_instance_profile {
+    arn = "${element((concat(aws_iam_instance_profile.bastion_service_assume_role_profile.*.arn, aws_iam_instance_profile.bastion_service_profile.*.arn)), 0)}"
+  }
+
+  network_interfaces {
+    associate_public_ip_address = "${var.public_ip}"
+    security_groups             = ["${aws_security_group.bastion_service.id}", "${compact(concat(var.security_groups_additional))}"]
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 #######################################################
 # ASG section
 #######################################################
@@ -58,9 +82,34 @@ resource "aws_autoscaling_group" "bastion-service" {
   max_size             = "${var.asg_max}"
   min_size             = "${var.asg_min}"
   desired_capacity     = "${var.asg_desired}"
-  launch_configuration = "${aws_launch_configuration.bastion-service-host.name}"
   vpc_zone_identifier  = ["${var.subnets_asg}"]
   target_group_arns    = ["${aws_lb_target_group.bastion-service.arn}", "${aws_lb_target_group.bastion-host.*.arn}"]
+
+  mixed_instances_policy {
+    instances_distribution {
+      on_demand_base_capacity                  = "${var.on_demand_base_capacity}"
+      on_demand_percentage_above_base_capacity = 0
+    }
+
+    launch_template {
+      launch_template_specification {
+        launch_template_id = "${aws_launch_template.bastion-service-host.id}"
+        version            = "$$Latest"
+      }
+
+      override {
+        instance_type = "${var.bastion_instance_type}"
+      }
+
+      override {
+        instance_type = "t3.small"
+      }
+
+      override {
+        instance_type = "t3.medium"
+      }
+    }
+  }
 
   lifecycle {
     create_before_destroy = true
