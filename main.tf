@@ -102,11 +102,11 @@ resource "aws_autoscaling_group" "bastion-service" {
       }
 
       override {
-        instance_type = "t2.small"
+        instance_type = "t3.small"
       }
 
       override {
-        instance_type = "t3.small"
+        instance_type = "t3.medium"
       }
     }
   }
