@@ -93,7 +93,7 @@ data "null_data_source" "asg-tags" {
 }
 
 resource "aws_autoscaling_group" "bastion-service" {
-  availability_zones = data.aws_availability_zones.available.names
+ # availability_zones = data.aws_availability_zones.available.names
   name_prefix        = "${var.service_name}-asg-${var.environment_name}"
   max_size           = var.asg_max
   min_size           = var.asg_min
@@ -120,7 +120,7 @@ resource "aws_autoscaling_group" "bastion-service" {
     }
   }
 
- # vpc_zone_identifier = var.subnets_asg
+ vpc_zone_identifier = var.subnets_asg
   target_group_arns = concat(
     [aws_lb_target_group.bastion-service.arn],
     aws_lb_target_group.bastion-host.*.arn
