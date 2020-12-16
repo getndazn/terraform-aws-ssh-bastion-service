@@ -120,7 +120,7 @@ resource "aws_autoscaling_group" "bastion-service" {
     }
   }
 
-  vpc_zone_identifier = var.subnets_asg
+ # vpc_zone_identifier = var.subnets_asg
   target_group_arns = concat(
     [aws_lb_target_group.bastion-service.arn],
     aws_lb_target_group.bastion-host.*.arn
